@@ -1,79 +1,35 @@
-import pyautogui
 import time
-from typing import Tuple
+import pyautogui
 
-class MouseAutomationError(Exception):
-    """Base class for mouse automation errors"""
-    pass
+# Eliminate built-in pauses for better performance
+pyautogui.PAUSE = 0
+pyautogui.FAILSAFE = False
 
-class InvalidCoordinatesError(MouseAutomationError):
-    """Raised when coordinates are invalid"""
-    pass
+class OptimizedAutoclicker:
+    def __init__(self, clicks_per_second=10):
+        self.interval = 1.0 / clicks_per_second
+        self.last_time = 0
 
-class OutOfBoundsError(MouseAutomationError):
-    """Raised when coordinates are outside screen bounds"""
-    pass
+    def click(self, x, y):
+        current_time = time.perf_counter()
+        if self.last_time > 0 and current_time - self.last_time < self.interval:
+            time.sleep(self.interval - (current_time - self.last_time))
+        pyautogui.moveTo(x, y, duration=0)
+        pyautogui.click(x=x, y=y)
+        self.last_time = time.perf_counter()
 
-class FailSafeTriggeredError(MouseAutomationError):
-    """Raised when fail safe is triggered"""
-    pass
+    def batch_click(self, positions):
+        for x, y in positions:
+            self.click(x, y)
 
-def get_screen_dimensions() -> Tuple[int, int]:
-    """Get current screen width and height"""
-    try:
-        width, height = pyautogui.size()
-        if width <= 0 or height <= 0:
-            raise MouseAutomationError("Invalid screen dimensions detected")
-        return width, height
+    def run_for_duration(self, x, y, duration_seconds):
+        end_time = time.perf_counter() + duration_seconds
+        while time.perf_counter() < end_time:
+            self.click(x, y)
 
-    except Exception as exc:
-        raise MouseAutomationError(f"Failed to retrieve screen size: {exc}") from exc
+def create_clicker(cps):
+    return OptimizedAutoclicker(cps)
 
-def validate_click_position(x: int, y: int) -> None:
-    """Validate click coordinates against edge cases"""
-    if not isinstance(x, int) or not isinstance(y, int):
-        raise InvalidCoordinatesError("X and Y must be integers")
-    if x < 0 or y < 0:
-        raise InvalidCoordinatesError("Coordinates cannot be negative")
-    width, height = get_screen_dimensions()
-    if x >= width or y >= height:
-        raise OutOfBoundsError(f"Position ({x}, {y}) exceeds screen bounds ({width}, {height})")
-
-def perform_click(x: int, y: int, num_clicks: int = 1, click_interval: float = 0.0) -> bool:
-    """Execute click with comprehensive error handling"""
-    try:
-        validate_click_position(x, y)
-        if num_clicks < 1:
-            raise MouseAutomationError("Number of clicks must be positive")
-        if click_interval < 0:
-            raise MouseAutomationError("Click interval must be non-negative")
-        pyautogui.click(x=x, y=y, clicks=num_clicks, interval=click_interval)
-        return True
-
-    except pyautogui.FailSafeException as exc:
-        raise FailSafeTriggeredError("Fail-safe activated: mouse moved to corner") from exc
-    except MouseAutomationError:
-        raise
-    except Exception as exc:
-        raise MouseAutomationError(f"Unexpected click failure: {exc}") from exc
-
-def run_autoclicker(x: int, y: int, total_duration: float = 10.0, interval_between_clicks: float = 0.05) -> None:
-    """Run autoclicker loop handling various edge cases"""
-    if total_duration <= 0:
-        raise MouseAutomationError("Duration must be positive")
-    start_time = time.time()
-    try:
-        while time.time() - start_time < total_duration:
-            try:
-                perform_click(x, y)
-                time.sleep(interval_between_clicks)
-            except (InvalidCoordinatesError, OutOfBoundsError, FailSafeTriggeredError) as err:
-                print(f"Edge case encountered: {err}")
-                break
-            except MouseAutomationError as err:
-                print(f"Automation error: {err}")
-                break
-    except KeyboardInterrupt:
-        print("Autoclicker stopped by user interrupt")
-    except Exception as err:
-        print(f"Critical error in autoclicker: {err}")
+def precompute_click_positions(base_x, base_y, num, offset=5):
+    pos_list = [(base_x + i * offset, base_y) for i in range(num)]
+    return pos_list
