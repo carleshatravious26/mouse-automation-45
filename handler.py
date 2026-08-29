@@ -1,52 +1,71 @@
-import pyautogui
 import time
-import logging
+from typing import Optional, Tuple
+import pyautogui
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+class ClickHandler:
+    """Handles mouse click automation for the autoclicker."""
 
-class MouseClickHandler:
-    # Initialize with failsafe and screen dimensions
-    def __init__(self):
-        pyautogui.FAILSAFE = True
-        try:
-            self.screen_width, self.screen_height = pyautogui.size()
-        except Exception:
-            self.screen_width, self.screen_height = 1920, 1080
-            logging.warning("Using default screen size")
+    def __init__(self, interval: float = 0.5, clicks: int = 1, button: str = "left") -> None:
+        """Set up the handler with click parameters.
 
-    # Validate click position against screen bounds
-    def check_bounds(self, x, y):
-        if x < 0 or y < 0 or x > self.screen_width or y > self.screen_height:
-            logging.error("Coordinates outside screen bounds")
-            return False
-        return True
+        Args:
+            interval: Seconds to wait between click sequences.
+            clicks: How many times to click each sequence.
+            button: Which mouse button to use for clicks.
+        """
+        self.interval: float = interval
+        self.clicks: int = clicks
+        self.button: str = "left"
+        self._is_running: bool = False
 
-    # Perform click with checks for invalid parameters and exceptions
-    def safe_click(self, x, y, clicks=1, interval=0.0):
-        if clicks <= 0:
-            logging.error("Clicks must be positive integer")
-            return False
-        if interval < 0:
-            logging.error("Interval must be non-negative")
-            return False
-        if not self.check_bounds(x, y):
-            return False
-        try:
-            pyautogui.click(x=x, y=y, clicks=clicks, interval=interval)
-            return True
-        except pyautogui.FailSafeException:
-            logging.warning("Failsafe triggered, stopping")
-            return False
-        except Exception as e:
-            logging.error(f"Click failed: {e}")
-            return False
+    def start(self, duration: Optional[float] = None) -> None:
+        """Launch the continuous clicking loop.
 
-    # Run repeated clicks handling interruptions and errors
-    def handle_autoclick(self, x, y, count, delay):
-        if count <= 0 or delay <= 0:
-            logging.error("Count and delay must be positive")
-            return
-        for i in range(count):
-            if not self.safe_click(x, y):
+        Args:
+            duration: Maximum seconds to continue. Infinite if not provided.
+        """
+        self._is_running = True
+        start_time = time.time()
+        while self._is_running:
+            if duration is not None and time.time() - start_time >= duration:
+                self.stop()
                 break
-            time.sleep(delay)
+            # Perform automated mouse click
+            pyautogui.click(clicks=self.clicks, button=self.button)
+            time.sleep(self.interval)
+
+    def stop(self) -> None:
+        """Terminate the clicking activity immediately."""
+        self._is_running = False
+
+    def move_to(self, x: int, y: int) -> None:
+        """Relocate the mouse pointer to given screen coordinates.
+
+        Args:
+            x: X-axis position on screen.
+            y: Y-axis position on screen.
+        """
+        pyautogui.moveTo(x, y)
+
+    def get_position(self) -> Tuple[int, int]:
+        """Fetch the present mouse pointer coordinates.
+
+        Returns:
+            Tuple containing x and y integer values.
+        """
+        position = pyautogui.position()
+        return position.x, position.y
+
+
+def initialize_handler(interval: float, clicks: int, button: str) -> ClickHandler:
+    """Instantiate a configured click handler.
+
+    Args:
+        interval: Delay between actions.
+        clicks: Repetitions per action.
+        button: Button identifier.
+
+    Returns:
+        Ready-to-use ClickHandler object.
+    """
+    return ClickHandler(interval=interval, clicks=clicks, button=button)
