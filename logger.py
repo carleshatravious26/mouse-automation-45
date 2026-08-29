@@ -1,30 +1,27 @@
 import logging
-from typing import Optional
+from logging.handlers import RotatingFileHandler
+import os
 
-class AutoClickerLogger:
-    """Handles logging for mouse automation events and errors."""
-    
-    def __init__(self, name: str = "mouse_automation", level: int = logging.INFO) -> None:
-        """Initialize the logger with a specific name and log level."""
-        self.logger = logging.getLogger(name)
-        self.logger.setLevel(level)
-        
-        if not self.logger.handlers:
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
-
-    def info(self, message: str) -> None:
-        """Log an informational message about clicker actions."""
-        self.logger.info(message)
-
-    def error(self, message: str, exc_info: Optional[bool] = None) -> None:
-        """Log an error message during automation execution."""
-        self.logger.error(message, exc_info=exc_info)
-
-    def warning(self, message: str) -> None:
-        """Log a warning message for unexpected states."""
-        self.logger.warning(message)
+def setup_logger(name="mouse_automation", log_file="logs/app.log", level=logging.INFO, max_bytes=5242880, backup_count=3):
+    """Configure logger with rotating file handler for the autoclicker."""
+    logger = logging.getLogger(name)
+    # Prevent adding multiple handlers if called repeatedly
+    if logger.hasHandlers():
+        return logger
+    logger.setLevel(level)
+    formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    # Create logs directory if needed
+    log_dir = os.path.dirname(log_file)
+    if log_dir and not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    # Set up rotating file handler
+    file_handler = RotatingFileHandler(
+        log_file, maxBytes=max_bytes, backupCount=backup_count
+    )
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    # Add console output
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    return logger
