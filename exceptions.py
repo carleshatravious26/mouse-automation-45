@@ -1,36 +1,27 @@
-class MouseAutomationError(Exception):
-    """Base class for exceptions in mouse automation."""
+class AutoclickerError(Exception):
+    """Base exception for mouse-automation-45."""
     pass
 
-class InvalidClickLocationError(MouseAutomationError):
-    """Exception raised for invalid click locations."""
-    def __init__(self, message='Click location is out of bounds.'): 
-        self.message = message 
-        super().__init__(self.message)
+class ConfigurationError(AutoclickerError):
+    """Raised when settings fail validation."""
+    pass
 
-class ClickNotPossibleError(MouseAutomationError):
-    """Exception raised when a click cannot be performed."""
-    def __init__(self, message='Click action cannot be performed at this time.'): 
-        self.message = message 
-        super().__init__(self.message)
+class ClickerRuntimeError(AutoclickerError):
+    """Raised during active clicker operation."""
+    pass
 
-class MouseAutomation:
-    def __init__(self, screen_width, screen_height):
-        self.screen_width = screen_width
-        self.screen_height = screen_height
+class InputValidationError(AutoclickerError):
+    """Raised when user input for intervals is invalid."""
+    pass
 
-    def validate_click(self, x, y):
-        if x < 0 or x >= self.screen_width or y < 0 or y >= self.screen_height:
-            raise InvalidClickLocationError()
+def validate_interval(interval: float):
+    """Ensures click interval is within safe bounds."""
+    if interval < 0.01:
+        raise InputValidationError("Interval must be at least 0.01 seconds.")
+    if interval > 60.0:
+        raise InputValidationError("Interval cannot exceed 60 seconds.")
 
-    def click(self, x, y):
-        self.validate_click(x, y)
-        # Simulate click action here
-        # raise ClickNotPossibleError() if needed
-        print(f'Clicked at ({x}, {y}')
-
-    def perform_click(self, x, y):
-        try:
-            self.click(x, y)
-        except MouseAutomationError as e:
-            print(f'Error: {e.message}')
+def validate_coordinates(x: int, y: int):
+    """Checks if coordinates are non-negative."""
+    if x < 0 or y < 0:
+        raise InputValidationError("Coordinates must be positive integers.")
