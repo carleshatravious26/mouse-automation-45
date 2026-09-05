@@ -1,29 +1,26 @@
-import sys
-from typing import Final
+"""Constants and limits for the mouse-automation-45 autoclicker."""
 
-# performance settings for high-frequency input simulation
-DEFAULT_CLICK_INTERVAL: Final[float] = 0.001
-MAX_CLICK_RATE: Final[int] = 1000
+from typing import Tuple
 
-# buffer sizing for mouse event queueing
-EVENT_BUFFER_SIZE: Final[int] = 2048
+# Speed limits to prevent system instability or application crashes
+MIN_CLICK_DELAY_SECS: float = 0.001  # Maximum 1000 clicks per second
+MAX_CLICK_DELAY_SECS: float = 3600.0  # 1 hour maximum interval
+DEFAULT_CLICK_DELAY_SECS: float = 0.1
 
-# thread priority and optimization flags
-ENABLE_GIL_RELEASE: Final[bool] = True
-USE_FAST_PATH: Final[bool] = sys.platform.startswith('win')
+# Coordinate bounds based on screen dimensions or generic safe limits
+MIN_SCREEN_COORDINATE: int = 0
+MAX_SCREEN_COORDINATE_X: int = 7680  # Support up to 8K width
+MAX_SCREEN_COORDINATE_Y: int = 4320  # Support up to 8K height
 
-# resource management constants
-MAX_WORKER_THREADS: Final[int] = 4
-IDLE_POLL_RATE: Final[float] = 0.016
+# Safety emergency stop configuration (fail-safe trigger)
+DEFAULT_FAILSAFE_KEY: str = "esc"
+FAILSAFE_CORNER: Tuple[int, int] = (0, 0)
 
-# system coordinate constraints
-SCREEN_MIN_WIDTH: Final[int] = 0
-SCREEN_MIN_HEIGHT: Final[int] = 0
+# Mouse buttons mapping
+ALLOWED_MOUSE_BUTTONS: Tuple[str, ...] = ("left", "right", "middle")
 
-def get_performance_mode() -> dict:
-    """returns dict of hardware-specific performance settings."""
-    return {
-        "buffer": EVENT_BUFFER_SIZE,
-        "fast_path": USE_FAST_PATH,
-        "threads": MAX_WORKER_THREADS
-    }
+# Error message templates for edge case handling
+ERROR_INVALID_DELAY: str = f"Delay must be between {MIN_CLICK_DELAY_SECS} and {MAX_CLICK_DELAY_SECS} seconds."
+ERROR_OUT_OF_BOUNDS: str = "Coordinates must be within the detectable screen area."
+ERROR_INVALID_BUTTON: str = f"Button must be one of: {', '.join(ALLOWED_MOUSE_BUTTONS)}"
+ERROR_FAILSAFE_TRIGGERED: str = "Failsafe triggered by moving the mouse to the corner or pressing the stop key."
