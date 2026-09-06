@@ -2,32 +2,39 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 
-def setup_logger(name='mouse-automation-45', log_file='automation.log'):
-    """Initializes a rotating file logger for session tracking."""
+LOG_FILE = "mouse_automation.log"
+MAX_BYTES = 5 * 1024 * 1024  # 5MB
+BACKUP_COUNT = 3
+
+def setup_logger(name: str = "mouse-automation") -> logging.Logger:
+    """
+    Configures a rotating file logger for the application.
+    """
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
 
-    # Prevent duplicate handlers if logger is re-initialized
+    # Prevent duplicate handlers if setup is called multiple times
     if not logger.handlers:
         formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
 
-        # Rotate files at 1MB, keeping 3 backups
-        handler = RotatingFileHandler(
-            log_file, 
-            maxBytes=1*1024*1024, 
-            backupCount=3
+        # File handler with rotation
+        file_handler = RotatingFileHandler(
+            LOG_FILE, 
+            maxBytes=MAX_BYTES, 
+            backupCount=BACKUP_COUNT
         )
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
+        file_handler.setFormatter(formatter)
+        
+        # Stream handler for console output
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
 
-        # Optional: Log to console as well
-        console = logging.StreamHandler()
-        console.setFormatter(formatter)
-        logger.addHandler(console)
+        logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
 
     return logger
 
-# Global logger instance
-log = setup_logger()
+# Initialize default logger
+logger = setup_logger()
