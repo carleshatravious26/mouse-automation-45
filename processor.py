@@ -1,44 +1,52 @@
 import time
-import logging
+from dataclasses import dataclass
+from typing import List, Tuple, Optional, Callable
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('mouse-automation-45')
+@dataclass
+class MouseAction:
+    """Represents a simulated mouse action command with delay details."""
+    action_type: str  # E.g., 'click', 'double_click', 'move'
+    coords: Tuple[int, int]  # Screen coordinates as (x, y)
+    delay: float  # Idle time in seconds to wait after execution
+    button: str = "left"  # Target mouse button: 'left', 'right', or 'middle'
 
-class ClickProcessor:
-    """Processes click sequences with safety boundaries and error handling."""
-    
-    def __init__(self, max_cps: int = 50):
-        self.max_cps = max_cps
-        self.min_interval = 1.0 / max_cps if max_cps > 0 else 0.02
+class ActionProcessor:
+    """Processes scheduled mouse actions and manages timing loops sequentially."""
 
-    def validate_coordinates(self, x: int, y: int, screen_width: int, screen_height: int) -> tuple[int, int]:
-        """Ensure coordinates stay within physical screen bounds to prevent off-screen anomalies."""
-        try:
-            safe_x = max(0, min(x, screen_width))
-            safe_y = max(0, min(y, screen_height))
-            return safe_x, safe_y
-        except Exception as e:
-            logger.error(f"Coordinate validation failed: {e}")
-            return 0, 0
+    def __init__(self, callback: Optional[Callable[[str, Tuple[int, int]], None]] = None) -> None:
+        """Initializes the processor with an optional callback for click simulation."""
+        self.callback = callback
+        self._active: bool = False
 
-    def process_click_delay(self, interval: float) -> float:
-        """Throttle interval to prevent exceeding maximum CPS limits."""
-        if interval < 0:
-            logger.warning("Negative interval detected, resetting to minimum safe delay.")
-            return self.min_interval
+    def execute(self, action: MouseAction) -> bool:
+        """Simulates execution of a single action and runs the post-delay."""
+        if not self._active:
+            return False
+        
+        # Trigger callback if defined (typically pointing to pyautogui/pynput wrapper)
+        if self.callback:
+            self.callback(action.action_type, action.coords)
             
-        if interval < self.min_interval:
-            return self.min_interval
-            
-        return interval
+        time.sleep(action.delay)
+        return True
 
-    def execute_action(self, action_func, *args, **kwargs):
-        """Safely execute a click action with exception suppression and logging."""
+    def run_queue(self, queue: List[MouseAction]) -> int:
+        """Sequentially executes a queue of mouse actions.
+
+        Returns the count of successfully executed tasks.
+        """
+        self._active = True
+        executed = 0
         try:
-            return action_func(*args, **kwargs)
-        except ZeroDivisionError:
-            logger.error("Division by zero encountered during timing calculation.")
-            return None
-        except Exception as e:
-            logger.critical(f"Unexpected error during click execution: {e}")
-            return None
+            for action in queue:
+                if not self._active:
+                    break
+                if self.execute(action):
+                    executed += 1
+        finally:
+            self._active = False
+        return executed
+
+    def stop(self) -> None:
+        """Interrupts and stops the current queue execution loop."""
+        self._active = False
