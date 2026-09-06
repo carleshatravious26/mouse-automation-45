@@ -1,26 +1,41 @@
-"""Constants and limits for the mouse-automation-45 autoclicker."""
+import platform
+from enum import Enum
 
-from typing import Tuple
+# Cross-platform input definitions
+SYSTEM_OS = platform.system()
 
-# Speed limits to prevent system instability or application crashes
-MIN_CLICK_DELAY_SECS: float = 0.001  # Maximum 1000 clicks per second
-MAX_CLICK_DELAY_SECS: float = 3600.0  # 1 hour maximum interval
-DEFAULT_CLICK_DELAY_SECS: float = 0.1
+class ClickType(Enum):
+    LEFT = 'left'
+    RIGHT = 'right'
+    MIDDLE = 'middle'
+    DOUBLE = 'double'
 
-# Coordinate bounds based on screen dimensions or generic safe limits
-MIN_SCREEN_COORDINATE: int = 0
-MAX_SCREEN_COORDINATE_X: int = 7680  # Support up to 8K width
-MAX_SCREEN_COORDINATE_Y: int = 4320  # Support up to 8K height
+class MouseAction(Enum):
+    PRESS = 'press'
+    RELEASE = 'release'
+    CLICK = 'click'
+    MOVE = 'move'
 
-# Safety emergency stop configuration (fail-safe trigger)
-DEFAULT_FAILSAFE_KEY: str = "esc"
-FAILSAFE_CORNER: Tuple[int, int] = (0, 0)
+# Default application settings
+DEFAULT_DELAY = 0.1
+MAX_CLICK_RATE = 1000  # Clicks per second limit
 
-# Mouse buttons mapping
-ALLOWED_MOUSE_BUTTONS: Tuple[str, ...] = ("left", "right", "middle")
+# System specific modifiers
+if SYSTEM_OS == "Darwin":
+    COMMAND_KEY = "cmd"
+else:
+    COMMAND_KEY = "ctrl"
 
-# Error message templates for edge case handling
-ERROR_INVALID_DELAY: str = f"Delay must be between {MIN_CLICK_DELAY_SECS} and {MAX_CLICK_DELAY_SECS} seconds."
-ERROR_OUT_OF_BOUNDS: str = "Coordinates must be within the detectable screen area."
-ERROR_INVALID_BUTTON: str = f"Button must be one of: {', '.join(ALLOWED_MOUSE_BUTTONS)}"
-ERROR_FAILSAFE_TRIGGERED: str = "Failsafe triggered by moving the mouse to the corner or pressing the stop key."
+# Configuration constraints
+MIN_X_COORD = 0
+MIN_Y_COORD = 0
+MAX_SCREEN_WIDTH = 1920
+MAX_SCREEN_HEIGHT = 1080
+
+def get_default_config():
+    """Returns standard configuration dictionary."""
+    return {
+        "delay": DEFAULT_DELAY,
+        "click_type": ClickType.LEFT.value,
+        "is_enabled": False
+    }
