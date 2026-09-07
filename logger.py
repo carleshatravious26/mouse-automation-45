@@ -1,40 +1,55 @@
 import logging
-from logging.handlers import RotatingFileHandler
 import os
+from datetime import datetime
 
-LOG_FILE = "mouse_automation.log"
-MAX_BYTES = 5 * 1024 * 1024  # 5MB
-BACKUP_COUNT = 3
+LOGGER_NAME = "mouse_automation"
 
-def setup_logger(name: str = "mouse-automation") -> logging.Logger:
+def setup_logger(log_file: str = "autoclicker.log", level: int = logging.INFO) -> logging.Logger:
     """
-    Configures a rotating file logger for the application.
+    Configures and returns the application logger with console and file handlers.
     """
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
+    logger = logging.getLogger(LOGGER_NAME)
+    logger.setLevel(level)
 
-    # Prevent duplicate handlers if setup is called multiple times
-    if not logger.handlers:
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+    # Avoid duplicate handlers if logger is already configured
+    if logger.hasHandlers():
+        return logger
 
-        # File handler with rotation
-        file_handler = RotatingFileHandler(
-            LOG_FILE, 
-            maxBytes=MAX_BYTES, 
-            backupCount=BACKUP_COUNT
-        )
+    formatter = logging.Formatter(
+        "[%(asctime)s] [%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+    # Console output
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    # File output
+    try:
+        file_handler = logging.FileHandler(log_file, encoding="utf-8")
         file_handler.setFormatter(formatter)
-        
-        # Stream handler for console output
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(formatter)
-
         logger.addHandler(file_handler)
-        logger.addHandler(console_handler)
+    except OSError as err:
+        logger.warning(f"Could not initialize log file handler: {err}")
 
     return logger
 
-# Initialize default logger
-logger = setup_logger()
+def get_logger() -> logging.Logger:
+    """
+    Retrieves the global logger instance.
+    """
+    return logging.getLogger(LOGGER_NAME)
+
+def log_click_event(x: int, y: int, button: str = "left") -> None:
+    """
+    Logs a simulated mouse click action with coordinates.
+    """
+    get_logger().info(f"Simulated click: {button.upper()} button at ({x}, {y})")
+
+def log_status_change(running: bool) -> None:
+    """
+    Logs state changes of the autoclicker execution.
+    """
+    status = "STARTED" if running else "STOPPED"
+    get_logger().info(f"Autoclicker execution status: {status}")
