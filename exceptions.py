@@ -1,33 +1,28 @@
-class AutomationError(Exception):
-    """Base exception for all mouse-automation-45 errors."""
-    pass
+class MouseAutomationError(Exception):
+    """Base exception for all mouse-automation-45 issues."""
 
-class ConfigError(AutomationError):
-    """Raised when configuration validation fails."""
-    pass
+class ConfigurationError(MouseAutomationError):
+    """Raised when user-defined settings are invalid."""
 
-class DeviceNotFoundError(AutomationError):
-    """Raised when target input device is unavailable."""
-    pass
+class ClickerRuntimeError(MouseAutomationError):
+    """Raised during active click execution failures."""
 
-class ExecutionTimeoutError(AutomationError):
-    """Raised when a click sequence exceeds allowed duration."""
-    pass
+class PermissionDeniedError(MouseAutomationError):
+    """Raised when the OS denies accessibility permissions."""
 
-class PermissionDeniedError(AutomationError):
-    """Raised when operating system denies input control."""
-    pass
+def validate_settings(settings: dict):
+    """Ensures configuration values are within logical bounds."""
+    if settings.get("interval", 0) < 0.001:
+        raise ConfigurationError("Interval too low; must be at least 1ms.")
+    
+    if not isinstance(settings.get("coords"), (tuple, list)) or len(settings["coords"]) != 2:
+        raise ConfigurationError("Coordinates must be a (x, y) tuple.")
 
-class RateLimitExceeded(AutomationError):
-    """Raised when click frequency exceeds safety thresholds."""
-    pass
-
-def raise_if_none(value, message):
-    """Utility to enforce non-null values in core logic."""
-    if value is None:
-        raise AutomationError(message)
-
-def validate_permission(granted):
-    """Ensures system access rights before automation start."""
-    if not granted:
-        raise PermissionDeniedError("Access to system input controls blocked")
+def handle_execution_failure(e: Exception):
+    """Centralized error reporting for runtime failures."""
+    if isinstance(e, PermissionDeniedError):
+        print("Error: Check OS accessibility permissions.")
+    elif isinstance(e, ConfigurationError):
+        print(f"Config Error: {e}")
+    else:
+        print(f"Unexpected error occurred: {e}")
