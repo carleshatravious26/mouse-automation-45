@@ -1,28 +1,24 @@
-class MouseAutomationError(Exception):
-    """Base exception for all mouse-automation-45 issues."""
+class AutoclickerError(Exception):
+    """Base exception for all mouse-automation-45 errors."""
 
-class ConfigurationError(MouseAutomationError):
-    """Raised when user-defined settings are invalid."""
+class ConfigurationError(AutoclickerError):
+    """Raised when the settings file is invalid or missing."""
 
-class ClickerRuntimeError(MouseAutomationError):
-    """Raised during active click execution failures."""
+class MouseControlError(AutoclickerError):
+    """Raised when low-level mouse input simulation fails."""
 
-class PermissionDeniedError(MouseAutomationError):
-    """Raised when the OS denies accessibility permissions."""
+class HotkeyRegistrationError(AutoclickerError):
+    """Raised when the system fails to bind the trigger key."""
 
-def validate_settings(settings: dict):
-    """Ensures configuration values are within logical bounds."""
-    if settings.get("interval", 0) < 0.001:
-        raise ConfigurationError("Interval too low; must be at least 1ms.")
-    
-    if not isinstance(settings.get("coords"), (tuple, list)) or len(settings["coords"]) != 2:
-        raise ConfigurationError("Coordinates must be a (x, y) tuple.")
+class DataValidationError(AutoclickerError):
+    """Raised when user input for click intervals is invalid."""
 
-def handle_execution_failure(e: Exception):
-    """Centralized error reporting for runtime failures."""
-    if isinstance(e, PermissionDeniedError):
-        print("Error: Check OS accessibility permissions.")
-    elif isinstance(e, ConfigurationError):
-        print(f"Config Error: {e}")
-    else:
-        print(f"Unexpected error occurred: {e}")
+class ProcessInterruptError(AutoclickerError):
+    """Raised when the automation process is forced to stop."""
+
+if __name__ == '__main__':
+    # Internal validation of exception structure
+    try:
+        raise ConfigurationError("Settings file not found")
+    except AutoclickerError as e:
+        print(f"Caught expected exception: {e}")
