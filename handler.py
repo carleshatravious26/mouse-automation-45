@@ -1,37 +1,31 @@
-import logging
 import pyautogui
-import sys
+import time
+import logging
 
-logger = logging.getLogger(__name__)
+class ClickHandler:
+    """Handles mouse click execution and interval timing."""
+    
+    def __init__(self, interval: float = 0.1):
+        self.interval = interval
+        self.logger = logging.getLogger(__name__)
 
-def safe_mouse_click(x, y):
-    """Executes a mouse click with fail-safe checks."""
-    try:
-        # Ensure coordinates are within screen bounds
-        screen_width, screen_height = pyautogui.size()
-        if not (0 <= x <= screen_width and 0 <= y <= screen_height):
-            raise ValueError(f"Coordinates ({x}, {y}) out of screen bounds")
+    def perform_click(self, x: int, y: int) -> None:
+        """Executes a single click at coordinates and enforces interval."""
+        try:
+            pyautogui.click(x=x, y=y)
+            time.sleep(self.interval)
+        except Exception as e:
+            self.logger.error(f"Click failure at ({x}, {y}): {e}")
 
-        # Fail-safe: moving mouse to 0,0 aborts execution
-        pyautogui.FAILSAFE = True
-        pyautogui.click(x, y)
-        return True
+    def run_sequence(self, coordinates: list) -> None:
+        """Iterates through provided coordinate list."""
+        for x, y in coordinates:
+            self.perform_click(x, y)
 
-    except pyautogui.FailSafeException:
-        logger.error("Fail-safe triggered: mouse moved to corner")
-        sys.exit(1)
-    except pyautogui.PyAutoGUIException as e:
-        logger.error(f"PyAutoGUI internal error: {e}")
-        return False
-    except ValueError as e:
-        logger.warning(f"Validation error: {e}")
-        return False
-    except Exception as e:
-        logger.critical(f"Unexpected error during click: {e}")
-        return False
-
-def validate_coordinates(coords):
-    """Validates input tuple for mouse interaction."""
-    if not isinstance(coords, (tuple, list)) or len(coords) != 2:
-        return False
-    return all(isinstance(i, (int, float)) for i in coords)
+class ClickConfiguration:
+    """Encapsulates runtime parameters."""
+    
+    @staticmethod
+    def validate_interval(interval: float) -> float:
+        """Ensures interval is within safe performance bounds."""
+        return max(0.01, min(interval, 5.0))
