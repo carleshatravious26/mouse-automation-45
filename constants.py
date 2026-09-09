@@ -1,41 +1,26 @@
-import platform
-from enum import Enum
+import sys
+from typing import Final
 
-# Cross-platform input definitions
-SYSTEM_OS = platform.system()
+# Application Metadata
+APP_NAME: Final[str] = "MouseAutomation45"
+APP_VERSION: Final[str] = "1.2.0"
 
-class ClickType(Enum):
-    LEFT = 'left'
-    RIGHT = 'right'
-    MIDDLE = 'middle'
-    DOUBLE = 'double'
+# Default Click Configurations
+DEFAULT_CLICK_INTERVAL: Final[float] = 0.1  # Seconds between clicks
+DEFAULT_CLICK_BUTTON: Final[str] = "left"   # 'left', 'right', or 'middle'
+DEFAULT_CLICK_TYPE: Final[str] = "single"   # 'single', 'double', or 'hold'
 
-class MouseAction(Enum):
-    PRESS = 'press'
-    RELEASE = 'release'
-    CLICK = 'click'
-    MOVE = 'move'
+# Safety and Boundary Limits
+MIN_INTERVAL_SECONDS: Final[float] = 0.001
+MAX_INTERVAL_SECONDS: Final[float] = 3600.0
+FAILSAFE_CORNER_SIZE: Final[int] = 10       # Pixels from screen corner to trigger failsafe
 
-# Default application settings
-DEFAULT_DELAY = 0.1
-MAX_CLICK_RATE = 1000  # Clicks per second limit
+# Hotkey Binding Defaults
+DEFAULT_START_HOTKEY: Final[str] = "<f8>"
+DEFAULT_STOP_HOTKEY: Final[str] = "<f9>"
+DEFAULT_TOGGLE_HOTKEY: Final[str] = "<f6>"
 
-# System specific modifiers
-if SYSTEM_OS == "Darwin":
-    COMMAND_KEY = "cmd"
-else:
-    COMMAND_KEY = "ctrl"
-
-# Configuration constraints
-MIN_X_COORD = 0
-MIN_Y_COORD = 0
-MAX_SCREEN_WIDTH = 1920
-MAX_SCREEN_HEIGHT = 1080
-
-def get_default_config():
-    """Returns standard configuration dictionary."""
-    return {
-        "delay": DEFAULT_DELAY,
-        "click_type": ClickType.LEFT.value,
-        "is_enabled": False
-    }
+# Platform Specifics
+IS_WINDOWS: Final[bool] = sys.platform == "win32"
+IS_MACOS: Final[bool] = sys.platform == "darwin"
+IS_LINUX: Final[bool] = sys.platform.startswith("linux")
