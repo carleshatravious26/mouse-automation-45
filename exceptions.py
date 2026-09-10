@@ -1,24 +1,26 @@
-class AutoclickerError(Exception):
+class MouseAutomationError(Exception):
     """Base exception for all mouse-automation-45 errors."""
+    pass
 
-class ConfigurationError(AutoclickerError):
-    """Raised when the settings file is invalid or missing."""
+class HardwareInteractionError(MouseAutomationError):
+    """Raised when low-level mouse control fails."""
+    pass
 
-class MouseControlError(AutoclickerError):
-    """Raised when low-level mouse input simulation fails."""
+class ConfigurationError(MouseAutomationError):
+    """Raised when provided config parameters are invalid."""
+    pass
 
-class HotkeyRegistrationError(AutoclickerError):
-    """Raised when the system fails to bind the trigger key."""
+class ExecutionTimeoutError(MouseAutomationError):
+    """Raised when an automation sequence hangs."""
+    pass
 
-class DataValidationError(AutoclickerError):
-    """Raised when user input for click intervals is invalid."""
+class InterruptSignal(MouseAutomationError):
+    """Raised when the user triggers a manual stop."""
+    pass
 
-class ProcessInterruptError(AutoclickerError):
-    """Raised when the automation process is forced to stop."""
-
-if __name__ == '__main__':
-    # Internal validation of exception structure
-    try:
-        raise ConfigurationError("Settings file not found")
-    except AutoclickerError as e:
-        print(f"Caught expected exception: {e}")
+def handle_automation_exception(e: Exception) -> None:
+    """Helper to format and log automation specific errors."""
+    if isinstance(e, MouseAutomationError):
+        print(f"[Automation Error]: {type(e).__name__} - {e}")
+    else:
+        print(f"[Unexpected Error]: {e}")
