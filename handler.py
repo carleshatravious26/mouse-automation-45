@@ -1,31 +1,29 @@
-import pyautogui
-import time
-import logging
+import json
+import os
+from typing import Dict, Any
 
-class ClickHandler:
-    """Handles mouse click execution and interval timing."""
-    
-    def __init__(self, interval: float = 0.1):
-        self.interval = interval
-        self.logger = logging.getLogger(__name__)
+def save_click_profile(filename: str, data: Dict[str, Any]) -> bool:
+    """Persists autoclicker configuration to a local JSON file."""
+    try:
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=4)
+        return True
+    except (IOError, TypeError) as e:
+        print(f"Storage error: {e}")
+        return False
 
-    def perform_click(self, x: int, y: int) -> None:
-        """Executes a single click at coordinates and enforces interval."""
-        try:
-            pyautogui.click(x=x, y=y)
-            time.sleep(self.interval)
-        except Exception as e:
-            self.logger.error(f"Click failure at ({x}, {y}): {e}")
+def load_click_profile(filename: str) -> Dict[str, Any]:
+    """Retrieves autoclicker settings from a JSON file."""
+    if not os.path.exists(filename):
+        return {}
+    try:
+        with open(filename, 'r') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        print(f"Retrieval error: {e}")
+        return {}
 
-    def run_sequence(self, coordinates: list) -> None:
-        """Iterates through provided coordinate list."""
-        for x, y in coordinates:
-            self.perform_click(x, y)
-
-class ClickConfiguration:
-    """Encapsulates runtime parameters."""
-    
-    @staticmethod
-    def validate_interval(interval: float) -> float:
-        """Ensures interval is within safe performance bounds."""
-        return max(0.01, min(interval, 5.0))
+def validate_settings(settings: Dict[str, Any]) -> bool:
+    """Checks configuration integrity for autoclick operations."""
+    required = {'interval', 'button', 'clicks'}
+    return all(key in settings for key in required)
