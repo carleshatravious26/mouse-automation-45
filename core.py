@@ -1,46 +1,54 @@
+import ctypes
 import time
+import threading
 
-class CoreAutoClicker:
-    """Core autoclicker module with performance optimizations."""
+class PerformanceClicker:
+    """A high-performance autoclicker utilizing direct Windows API calls for minimal latency."""
+    
+    # Windows API constants for mouse events
+    MOUSEEVENTF_LEFTDOWN = 0x0002
+    MOUSEEVENTF_LEFTUP = 0x0004
 
-    def __init__(self, clicks_per_second=10):
-        self.clicks_per_second = clicks_per_second
-        self.interval = 1.0 / clicks_per_second
-        self.running = False
-        self.clicks_done = 0
+    def __init__(self, interval_seconds: float = 0.001):
+        self.interval = interval_seconds
+        self.is_clicking = False
+        self._thread = None
+        # Cache the user32 reference to minimize lookup overhead in the tight loop
+        self._user32 = ctypes.windll.user32
 
-    def start(self, max_clicks=None, max_duration=None):
-        """Start optimized autoclick loop.
-        Uses high-resolution timer to maintain precise click rate
-        without cumulative timing errors.
-        """
-        self.running = True
-        self.clicks_done = 0
-        start = time.perf_counter()
-        target = start
+    def start(self) -> None:
+        """Starts the high-frequency clicking thread if not already running."""
+        if not self.is_clicking:
+            self.is_clicking = True
+            self._thread = threading.Thread(target=self._click_loop, daemon=True)
+            self._thread.start()
 
-        while self.running:
+    def stop(self) -> None:
+        """Stops the clicking loop and blocks until the thread terminates."""
+        self.is_clicking = False
+        if self._thread:
+            self._thread.join(timeout=1.0)
+
+    def _click_loop(self) -> None:
+        """Optimized inner loop utilizing high-precision timing and direct DLL calls."""
+        interval = self.interval
+        user32 = self._user32
+        down_flag = self.MOUSEEVENTF_LEFTDOWN
+        up_flag = self.MOUSEEVENTF_LEFTUP
+        
+        next_click = time.perf_counter()
+        
+        while self.is_clicking:
             now = time.perf_counter()
-
-            if max_clicks is not None and self.clicks_done >= max_clicks:
-                break
-            if max_duration is not None and (now - start) >= max_duration:
-                break
-
-            self.click()
-            self.clicks_done += 1
-
-            target += self.interval
-            sleep_time = target - time.perf_counter()
-            if sleep_time > 0:
+            if now >= next_click:
+                # Direct C function calls to bypass Python wrapper overhead
+                user32.mouse_event(down_flag, 0, 0, 0, 0)
+                user32.mouse_event(up_flag, 0, 0, 0, 0)
+                
+                # Calculate next target time to maintain precise frequency
+                next_click = now + interval
+                
+            # Adaptive micro-sleep to prevent 100% CPU utilization
+            sleep_time = next_click - time.perf_counter()
+            if sleep_time > 0.0005:
                 time.sleep(sleep_time)
-
-    def click(self):
-        # Actual implementation would use mouse automation library
-        # e.g. from pynput.mouse import Button, Controller
-        # mouse = Controller()
-        # mouse.click(Button.left, 1)
-        print("Mouse click executed")
-
-    def stop(self):
-        self.running = False
