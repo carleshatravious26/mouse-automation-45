@@ -1,40 +1,38 @@
-import re
-from typing import Any, Dict, Optional
+from typing import Tuple, Union, Any
 
-def validate_click_config(config: Dict[str, Any]) -> bool:
-    """
-    Validates that the provided configuration has the required fields
-    and correct data types for the autoclicker engine.
-    """
-    required_fields = {
-        "interval": (float, int),
-        "button": str,
-        "coordinates": tuple
-    }
+def validate_interval(interval: Union[int, float]) -> float:
+    '''
+    Validates the click interval to ensure it is a positive number.
 
-    for field, expected_type in required_fields.items():
-        if field not in config:
-            return False
-        if not isinstance(config[field], expected_type):
-            return False
+    Args:
+        interval: The time delay between clicks in seconds.
 
-    # Validate coordinates are positive integers
-    x, y = config["coordinates"]
-    if not (isinstance(x, int) and isinstance(y, int) and x >= 0 and y >= 0):
-        return False
+    Returns:
+        The validated interval as a float.
 
-    # Validate interval is a positive value
-    if config["interval"] <= 0:
-        return False
+    Raises:
+        TypeError: If the interval is not a number.
+        ValueError: If the interval is less than or equal to zero.
+    '''
+    if not isinstance(interval, (int, float)):
+        raise TypeError(f'Interval must be a number, got {type(interval).__name__}')
+    if interval <= 0:
+        raise ValueError(f'Interval must be greater than 0, got {interval}')
+    return float(interval)
 
-    return True
+def validate_coordinates(coords: Tuple[Any, Any]) -> Tuple[int, int]:
+    '''
+    Validates the screen coordinates to ensure they are integers.
 
-def sanitize_hotkey(key: str) -> Optional[str]:
-    """
-    Sanitizes hotkey input to ensure it matches standard
-    keyboard event formats.
-    """
-    pattern = r'^[a-z0-9_]{1,10}$'
-    if re.match(pattern, key.lower()):
-        return key.lower()
-    return None
+    Args:
+        coords: A tuple containing (x, y) coordinate values.
+
+    Returns:
+        A tuple of validated integer coordinates.
+
+    Raises:
+        TypeError: If coordinates are not a sequence of length 2.
+        ValueError: If coordinate values cannot be converted to integers or are negative.
+    '''
+    if not isinstance(coords, tuple) or len(coords) != 2:
+        raise TypeError('Coordinates must be a tuple of (x, y)')\
