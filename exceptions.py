@@ -1,26 +1,26 @@
 class MouseAutomationError(Exception):
-    """Base exception for all mouse-automation-45 errors."""
+    """Base exception for the mouse-automation-45 package."""
     pass
 
-class HardwareInteractionError(MouseAutomationError):
-    """Raised when low-level mouse control fails."""
-    pass
+class ClickExecutionError(MouseAutomationError):
+    """Raised when an autoclick operation fails to execute."""
+    def __init__(self, message: str, coordinate: tuple[int, int]) -> None:
+        super().__init__(f"{message} at {coordinate}")
+        self.coordinate = coordinate
 
 class ConfigurationError(MouseAutomationError):
-    """Raised when provided config parameters are invalid."""
-    pass
+    """Raised when provided settings are invalid or out of bounds."""
+    def __init__(self, setting: str, value: float) -> None:
+        super().__init__(f"Invalid value '{value}' for setting '{setting}'")
+        self.setting = setting
 
-class ExecutionTimeoutError(MouseAutomationError):
-    """Raised when an automation sequence hangs."""
-    pass
+class HardwareAccessError(MouseAutomationError):
+    """Raised when the system blocks input simulation."""
+    def __init__(self, message: str = "Permission denied for input simulation") -> None:
+        super().__init__(message)
 
-class InterruptSignal(MouseAutomationError):
-    """Raised when the user triggers a manual stop."""
-    pass
-
-def handle_automation_exception(e: Exception) -> None:
-    """Helper to format and log automation specific errors."""
-    if isinstance(e, MouseAutomationError):
-        print(f"[Automation Error]: {type(e).__name__} - {e}")
-    else:
-        print(f"[Unexpected Error]: {e}")
+class IntervalTimingError(MouseAutomationError):
+    """Raised when the requested click frequency is impossible."""
+    def __init__(self, interval: float) -> None:
+        super().__init__(f"Frequency constraint violation: {interval}s is too fast")
+        self.interval = interval
