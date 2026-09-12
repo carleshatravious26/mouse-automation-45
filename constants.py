@@ -1,26 +1,39 @@
-import sys
-from typing import Final
+import os
+from typing import Dict, Any
+import json
 
-# Application Metadata
-APP_NAME: Final[str] = "MouseAutomation45"
-APP_VERSION: Final[str] = "1.2.0"
+# Default autoclicker configuration settings
+DEFAULT_CONFIG = {
+    "click_interval": 0.1,
+    "button": "left",
+    "repeat_times": 100,
+    "hotkey": "f6",
+    "randomization": False
+}
 
-# Default Click Configurations
-DEFAULT_CLICK_INTERVAL: Final[float] = 0.1  # Seconds between clicks
-DEFAULT_CLICK_BUTTON: Final[str] = "left"   # 'left', 'right', or 'middle'
-DEFAULT_CLICK_TYPE: Final[str] = "single"   # 'single', 'double', or 'hold'
+CONFIG_FILE_PATH = "settings.json"
 
-# Safety and Boundary Limits
-MIN_INTERVAL_SECONDS: Final[float] = 0.001
-MAX_INTERVAL_SECONDS: Final[float] = 3600.0
-FAILSAFE_CORNER_SIZE: Final[int] = 10       # Pixels from screen corner to trigger failsafe
+def load_app_config() -> Dict[str, Any]:
+    """Loads configuration from disk or returns defaults if missing."""
+    if not os.path.exists(CONFIG_FILE_PATH):
+        return DEFAULT_CONFIG.copy()
+    
+    try:
+        with open(CONFIG_FILE_PATH, "r") as f:
+            return {**DEFAULT_CONFIG, **json.load(f)}
+    except (json.JSONDecodeError, IOError):
+        return DEFAULT_CONFIG.copy()
 
-# Hotkey Binding Defaults
-DEFAULT_START_HOTKEY: Final[str] = "<f8>"
-DEFAULT_STOP_HOTKEY: Final[str] = "<f9>"
-DEFAULT_TOGGLE_HOTKEY: Final[str] = "<f6>"
+def save_app_config(config: Dict[str, Any]) -> None:
+    """Persists current configuration to the local filesystem."""
+    try:
+        with open(CONFIG_FILE_PATH, "w") as f:
+            json.dump(config, f, indent=4)
+    except IOError as e:
+        print(f"Failed to save configuration: {e}")
 
-# Platform Specifics
-IS_WINDOWS: Final[bool] = sys.platform == "win32"
-IS_MACOS: Final[bool] = sys.platform == "darwin"
-IS_LINUX: Final[bool] = sys.platform.startswith("linux")
+# UI and logic constants
+MIN_INTERVAL = 0.01
+MAX_INTERVAL = 60.0
+SUPPORTED_BUTTONS = ["left", "right", "middle"]
+APP_VERSION = "1.2.0"
