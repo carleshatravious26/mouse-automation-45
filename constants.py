@@ -1,39 +1,34 @@
-import os
-from typing import Dict, Any
-import json
+import sys
 
-# Default autoclicker configuration settings
-DEFAULT_CONFIG = {
-    "click_interval": 0.1,
-    "button": "left",
-    "repeat_times": 100,
-    "hotkey": "f6",
-    "randomization": False
+# Optimized event timings for low-latency click execution
+# Milliseconds define the overhead between internal cycles
+MIN_CLICK_INTERVAL_MS = 0.01
+MAX_CLICK_INTERVAL_MS = 1000.0
+
+# Hardware acceleration defaults
+# Setting priority to real-time for os-level thread scheduling
+OS_PRIORITY_BOOST = True
+
+# Batch size for queue processing to minimize system calls
+# Increasing batch size reduces CPU context switching frequency
+PROCESS_BATCH_SIZE = 64
+
+# Detection buffer settings
+# Reduces coordinate calculation drift during high-speed sessions
+PRECISION_THRESHOLD = 0.005
+
+# Thread management
+# Limits pool size to prevent exhaustion on lower-end hardware
+MAX_WORKER_THREADS = 4
+
+# Default event type mappings for faster lookup operations
+EVENT_MAPPING = {
+    'left': 1,
+    'right': 2,
+    'middle': 3
 }
 
-CONFIG_FILE_PATH = "settings.json"
-
-def load_app_config() -> Dict[str, Any]:
-    """Loads configuration from disk or returns defaults if missing."""
-    if not os.path.exists(CONFIG_FILE_PATH):
-        return DEFAULT_CONFIG.copy()
-    
-    try:
-        with open(CONFIG_FILE_PATH, "r") as f:
-            return {**DEFAULT_CONFIG, **json.load(f)}
-    except (json.JSONDecodeError, IOError):
-        return DEFAULT_CONFIG.copy()
-
-def save_app_config(config: Dict[str, Any]) -> None:
-    """Persists current configuration to the local filesystem."""
-    try:
-        with open(CONFIG_FILE_PATH, "w") as f:
-            json.dump(config, f, indent=4)
-    except IOError as e:
-        print(f"Failed to save configuration: {e}")
-
-# UI and logic constants
-MIN_INTERVAL = 0.01
-MAX_INTERVAL = 60.0
-SUPPORTED_BUTTONS = ["left", "right", "middle"]
-APP_VERSION = "1.2.0"
+# System path normalization constants
+# Using binary flags for cross-platform event polling efficiency
+IS_WINDOWS = sys.platform == 'win32'
+IS_LINUX = sys.platform.startswith('linux')
